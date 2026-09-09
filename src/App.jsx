@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
+import ConstellationCanvas from './components/ConstellationCanvas';
+import NewConstellationCanvas from './components/NewConstellationCanvas';
 
-// Shared Mock Data
 const PLAYABLE_GAMES = [
-  { id: 'neon-runner', title: 'Neon Cyber Runner', genre: 'Arcade', rating: '4.8', embedUrl: 'https://play.gamepix.com/embed/neon-runner' },
-  { id: 'pixel-dungeon', title: 'Pixel Dungeon Quest', genre: 'RPG', rating: '4.5', embedUrl: 'https://play.gamepix.com/embed/pixel-dungeon' },
+  {id: 'angle-maker', title: 'Angle Maker', genre: 'Math', rating: '3.5', gameComponent: <ConstellationCanvas />},
+  {id: 'new-angle-maker', title: 'Angle Maker Game', genre: 'Math', rating: '3.5', gameComponent: <NewConstellationCanvas />},
 ];
 
 const STORE_GAMES = [
@@ -122,14 +123,7 @@ function GamePlayerPage() {
         <Link to="/" style={styles.backBtn}>← Back to Portal</Link>
         <h2 style={styles.cardTitle}>{game.title}</h2>
       </div>
-      <div style={styles.iframeWrapper}>
-        <iframe 
-          src={game.embedUrl} 
-          title={game.title} 
-          style={styles.iframe} 
-          allowFullScreen
-        />
-      </div>
+      {game.gameComponent}
     </div>
   );
 }
