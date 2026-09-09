@@ -38,7 +38,7 @@ export default function App() {
       </Routes>
 
       <footer style={styles.footer}>
-        <p style={styles.footerText}>© {new Date().getFullYear()} GamePortal. All rights reserved.</p>
+        <p style={styles.footerText}>© {new Date().getFullYear()} Mircohair's Shop. All rights reserved.</p>
       </footer>
     </div>
   );
