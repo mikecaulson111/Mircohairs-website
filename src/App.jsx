@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
 import ConstellationCanvas from './components/ConstellationCanvas';
 import NewConstellationCanvas from './components/NewConstellationCanvas';
+import { LogoIcon } from './utils/appUtils';
 
 const PLAYABLE_GAMES = [
   {id: 'angle-maker', title: 'Angle Maker', genre: 'Math', rating: '3.5', gameComponent: <ConstellationCanvas />},
@@ -24,7 +25,8 @@ export default function App() {
     <div style={styles.container}>
       {/* Top Navigation Bar */}
       <header style={styles.navbar}>
-        <Link to="/" style={styles.logo}>🎮 Mircohair's Shop</Link>
+        {/* <Link to="/" style={styles.logo}>🎮 Mircohair's Shop</Link> */}
+        <Link to="/" style={styles.logo}>{<LogoIcon size={32} />} Mircohair's Shop</Link>
         <nav style={styles.navLinks}>
           <Link to="/" style={styles.navLink}>Home & Store</Link>
           <Link to="/cart" style={styles.cartBtn}>🛒 Cart ({cart.length})</Link>
@@ -182,7 +184,9 @@ const styles = {
     fontSize: '24px', 
     fontWeight: 'bold', 
     color: '#00d2ff', // High-contrast neon cyan
-    textDecoration: 'none' 
+    textDecoration: 'none',
+    display: 'inline-flex',
+    lineHeight: 1,
   },
   navLinks: { 
     display: 'flex', 
