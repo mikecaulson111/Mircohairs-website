@@ -280,7 +280,7 @@ const NewConstellationCanvas = () => {
           />
         </div>
         <label>
-            Use assist
+            Use assist (only works on desktop)
             <input
                 type="checkbox"
                 checked={isAssistOn}
