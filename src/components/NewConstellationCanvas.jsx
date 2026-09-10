@@ -14,10 +14,11 @@ const NewConstellationCanvas = () => {
   const [total, setTotal] = useState(0);
   const [showNext, setShowNext] = useState(true);
   const [texter, setTexter] = useState("Try to make a 90° angle");
-  // const [angler, setAngler] = useState(90);
-  // const [update, setUpdate] = useState(true);
   const anglerRef = useRef(90);
   const updateRef = useRef(true);
+
+  const [isAssistOn, setIsAssistOn] = useState(false);
+  const assistRef = useRef(false);
 
   // Secret physics and cursor tracking
   const mouseRef = useRef({
@@ -32,6 +33,54 @@ const NewConstellationCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
+
+    const createArc = (pointA, pointB, pointC) => {
+        var angleBA = Math.atan2(pointA.y - pointB.y, pointA.x - pointB.x);
+        var angleBC = Math.atan2(pointC.y - pointB.y, pointC.x - pointB.x);
+
+        var angleDiff = angleBC - angleBA;
+
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        while (angleDiff > Math.PI)  angleDiff -= 2 * Math.PI;
+
+        var degrees = Math.abs(angleDiff) * (180 / Math.PI);
+
+        var arcRadius = 25;
+
+        ctx.beginPath();
+        const counnterClockwise = angleDiff < 0;
+        ctx.arc(pointB.x, pointB.y, arcRadius, angleBA, angleBC, counnterClockwise);
+        ctx.strokeStyle = "#a855f7";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        var midAngle = (angleBA) + (angleDiff / 2);
+
+        var labelOffset = 35;
+        var labelX = pointB.x + Math.cos(midAngle) * labelOffset;
+        var labelY = pointB.y + Math.sin(midAngle) * labelOffset;
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px sans-serif";
+        ctx.fillText(Math.round(degrees) + '°', labelX, labelY);
+
+        if (degrees > 180) {
+            degrees = 360 - degrees;
+        }
+        if (dotsRef.current.length === 3) {
+            if (updateRef.current && Math.abs(degrees - anglerRef.current) <= 6) {
+                setTotal(total => total + 1);
+                setCountCorrect(countCorrect => countCorrect + 1);
+                setShowNext(true);
+                setTexter("CORRECT!! " + anglerRef.current + "°");
+                updateRef.current = false;
+            } else if (updateRef.current) {
+                setTotal(total => total + 1);
+                setTexter("Incorrect :( " + anglerRef.current + "°");;
+                updateRef.current = false;
+                setShowNext(true);
+            }
+        }
+    }
 
     // 1. Handle Responsive Canvas Sizing
     const resizeCanvas = () => {
@@ -98,53 +147,8 @@ const NewConstellationCanvas = () => {
             const pointB = dots[i];
             const pointC = dots[i+1];
 
-            var angleBA = Math.atan2(pointA.y - pointB.y, pointA.x - pointB.x);
-            var angleBC = Math.atan2(pointC.y - pointB.y, pointC.x - pointB.x);
+            createArc(pointA, pointB, pointC);
 
-            var angleDiff = angleBC - angleBA;
-
-            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-            while (angleDiff > Math.PI)  angleDiff -= 2 * Math.PI;
-
-            var degrees = Math.abs(angleDiff) * (180 / Math.PI);
-
-            var arcRadius = 25;
-
-            ctx.beginPath();
-            const counnterClockwise = angleDiff < 0;
-            var startArc = Math.min(angleBA, angleBC);
-            var endArc   = Math.max(angleBA, angleBC);
-            // ctx.arc(pointB.x, pointB.y, arcRadius, startArc, endArc);
-            ctx.arc(pointB.x, pointB.y, arcRadius, angleBA, angleBC, counnterClockwise);
-            ctx.strokeStyle = "#a855f7";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // var midAngle = (angleBA + angleBC) / 2;
-            var midAngle = (angleBA) + (angleDiff / 2);
-
-            var labelOffset = 35;
-            var labelX = pointB.x + Math.cos(midAngle) * labelOffset;
-            var labelY = pointB.y + Math.sin(midAngle) * labelOffset;
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "12px sans-serif";
-            ctx.fillText(Math.round(degrees) + '°', labelX, labelY);
-
-            if (degrees > 180) {
-                degrees = 360 - degrees;
-            }
-            if (updateRef.current && Math.abs(degrees - anglerRef.current) <= 6) {
-                setTotal(total => total + 1);
-                setCountCorrect(countCorrect => countCorrect + 1);
-                setShowNext(true);
-                setTexter("CORRECT!! " + anglerRef.current + "°");
-                updateRef.current = false;
-            } else if (updateRef.current) {
-                setTotal(total => total + 1);
-                setTexter("Incorrect :( " + anglerRef.current + "°");;
-                updateRef.current = false;
-                setShowNext(true);
-            }
         }
       }
 
@@ -197,6 +201,10 @@ const NewConstellationCanvas = () => {
           ctx.stroke();
           ctx.setLineDash([]); // Reset line style
         }
+        if (assistRef.current && dots.length === 2) {
+            const mouseDot = {x: mouse.x, y: mouse.y};
+            createArc(dots[0], dots[1], mouseDot);
+        }
       }
 
       animationFrameId = requestAnimationFrame(renderLoop);
@@ -224,46 +232,61 @@ const NewConstellationCanvas = () => {
     updateRef.current = true;
     var newAng = Math.floor(Math.random() * 180 + 1);
     setTexter("Try to make a " + newAng + "° angle");
-    // setAngler(newAng);
     anglerRef.current = newAng;
     setShowNext(false);
   }
 
-  return (
-    <div style={{ width: '100%', height: '450px', position: 'relative', overflow: 'hidden' }}>
-      {/* UI Overlay Controls */}
-      <div style={uiOverlayStyles.container}>
-        {isGame ?
-            <>
-                <span style={uiOverlayStyles.text}>
-                    Number Correct: {countCorrect} ({countCorrect}/{total}, {total > 0 ? ((countCorrect / total) * 100).toFixed(2) : 0}% )
-                </span>
-                {showNext ? <button onClick={handleNext} style={uiOverlayStyles.clearBtn}>
-                    Next
-                </button> : <></>}
-                <span style={uiOverlayStyles.text}>
-                    {texter}
-                </span>
-            </>
-            :
-            <>
-                <span style={uiOverlayStyles.text}>
-                  Nodes Placed: <strong style={{ color: '#00d2ff' }}>{dotCount}</strong>
-                </span>
-                <button onClick={handleClear} style={uiOverlayStyles.clearBtn}>
-                  Clear Canvas
-                </button>
-                <span style={uiOverlayStyles.text}>
-                    Just start clicking below
-                </span>
-            </>
-        }
-      </div>
+  const handleAssistChange = () => {
+    assistRef.current = !assistRef.current;
+    setIsAssistOn(current => !current);
+  }
 
-      <canvas 
-        ref={canvasRef} 
-        style={{ display: 'block', cursor: 'crosshair', borderRadius: '12px', border: '1px solid #33333d' }}
-      />
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ width: '100%', height: '450px', position: 'relative', overflow: 'hidden' }}>
+          {/* UI Overlay Controls */}
+          <div style={uiOverlayStyles.container}>
+            {isGame ?
+                <>
+                    <span style={uiOverlayStyles.text}>
+                        Number Correct: {countCorrect} ({countCorrect}/{total}, {total > 0 ? ((countCorrect / total) * 100).toFixed(2) : 0}% )
+                    </span>
+                    {showNext ? <button onClick={handleNext} style={uiOverlayStyles.clearBtn}>
+                        Next
+                    </button> : <></>}
+                    <span style={uiOverlayStyles.text}>
+                        {texter}
+                    </span>
+                    
+                </>
+                :
+                <>
+                    <span style={uiOverlayStyles.text}>
+                      Nodes Placed: <strong style={{ color: '#00d2ff' }}>{dotCount}</strong>
+                    </span>
+                    <button onClick={handleClear} style={uiOverlayStyles.clearBtn}>
+                      Clear Canvas
+                    </button>
+                    <span style={uiOverlayStyles.text}>
+                        Just start clicking below
+                    </span>
+                </>
+            }
+          </div>
+
+          <canvas 
+            ref={canvasRef} 
+            style={{ display: 'block', cursor: 'crosshair', borderRadius: '12px', border: '1px solid #33333d' }}
+          />
+        </div>
+        <label>
+            Use assist
+            <input
+                type="checkbox"
+                checked={isAssistOn}
+                onChange={handleAssistChange}
+            />
+        </label>
     </div>
   );
 };
