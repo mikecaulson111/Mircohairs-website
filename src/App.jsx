@@ -5,8 +5,8 @@ import NewConstellationCanvas from './components/NewConstellationCanvas';
 import { LogoIcon } from './utils/appUtils';
 
 const PLAYABLE_GAMES = [
-  {id: 'angle-maker', title: 'Angle Maker', genre: 'Math', rating: '3.5', gameComponent: <ConstellationCanvas />},
-  {id: 'new-angle-maker', title: 'Angle Maker Game', genre: 'Math', rating: '3.5', gameComponent: <NewConstellationCanvas />},
+  {id: 'angle-plotter', title: 'Angle Plotter', genre: 'Math', rating: '3.5', gameComponent: <ConstellationCanvas />},
+  {id: 'new-angle-maker', title: 'Angle Maker Game', genre: 'Math', rating: '4', gameComponent: <NewConstellationCanvas />},
 ];
 
 const STORE_GAMES = [
