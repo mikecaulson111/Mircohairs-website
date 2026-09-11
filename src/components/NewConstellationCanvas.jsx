@@ -19,6 +19,8 @@ const NewConstellationCanvas = () => {
 
   const [isAssistOn, setIsAssistOn] = useState(false);
   const assistRef = useRef(false);
+  const [isProjectionsOn, setIsProjectionsOn] = useState(false);
+  const projectionsRef = useRef(false);
 
   // Secret physics and cursor tracking
   const mouseRef = useRef({
@@ -123,6 +125,9 @@ const NewConstellationCanvas = () => {
       const dots = dotsRef.current;
       const mouse = mouseRef.current;
 
+      if (typeof mouse.x !== 'number') mouse.x = mouse.targetX || 0;
+      if (typeof mouse.y !== 'number') mouse.y = mouse.targetY || 0;
+
       // Mouse position easing math (smooth catch-up)
       mouse.x += (mouse.targetX - mouse.x) * 0.15;
       mouse.y += (mouse.targetY - mouse.y) * 0.15;
@@ -201,9 +206,84 @@ const NewConstellationCanvas = () => {
           ctx.stroke();
           ctx.setLineDash([]); // Reset line style
         }
-        if (assistRef.current && dots.length === 2) {
-            const mouseDot = {x: mouse.x, y: mouse.y};
-            createArc(dots[0], dots[1], mouseDot);
+        if (dots.length === 2) {
+            if (assistRef.current) {
+                const mouseDot = {x: mouse.x, y: mouse.y};
+                createArc(dots[0], dots[1], mouseDot);
+            }
+            if (projectionsRef.current && dots.length >= 2) {
+                const pointO = dots[1];
+                const pointA = dots[0];
+                const pointB = { x: mouse.x, y: mouse.y };
+
+                // Vector OA
+                const distOA = { dx: pointA.x - pointO.x, dy: pointA.y - pointO.y };
+                const lenOA = Math.sqrt(distOA.dx * distOA.dx + distOA.dy * distOA.dy);
+
+                // Guard against division by zero if dots overlap or coordinates are invalid
+                if (lenOA > 0 && !isNaN(lenOA)) {
+                  // Vector OB
+                  const distOB = { dx: pointB.x - pointO.x, dy: pointB.y - pointO.y };
+
+                  // Scalar projection via Dot Product: (OB · OA) / |OA|
+                  const dotProduct = distOB.dx * distOA.dx + distOB.dy * distOA.dy;
+                  const projLength = dotProduct / lenOA;
+
+                  if (projLength >= 0 && !isNaN(projLength)) {
+                    // Unit vector along OA
+                    const dirOA = { x: distOA.dx / lenOA, y: distOA.dy / lenOA };
+
+                    // Project point along ray OA starting from pointO
+                    const startPoint = {
+                      x: pointO.x + dirOA.x * projLength,
+                      y: pointO.y + dirOA.y * projLength
+                    };
+
+                    const pointToPlace = {
+                        x: startPoint.x - (-dirOA.y * 10),
+                        y: startPoint.y - (dirOA.x * 10)
+                    };
+
+                    ctx.beginPath();
+                    ctx.moveTo(pointO.x - (-dirOA.y * 10), pointO.y - (dirOA.x * 10));
+                    ctx.lineTo(pointToPlace.x, pointToPlace.y);
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4,4]);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(pointToPlace.x + (-dirOA.y * 25), pointToPlace.y + (dirOA.x * 25));
+                    ctx.lineTo(pointB.x, pointB.y);
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // length from projection end to pointB (sin)
+                    var angleOA = Math.atan2(pointA.y - pointO.y, pointA.x - pointO.x);
+                    var angleOB = Math.atan2(pointB.y - pointO.y, pointB.x - pointO.x);
+
+                    var angleDiff = angleOB - angleOA;
+                    const lenProjB = Math.sin(angleDiff) * Math.sqrt(((pointB.x-pointO.x)*(pointB.x-pointO.x)) + ((pointB.y-pointO.y)*(pointB.y-pointO.y)));
+                    const pointHalfwayOpp = {
+                        x: ((pointB.x - startPoint.x) / 2),
+                        y: ((pointB.y - startPoint.y) / 2)
+                    };
+                    const pointHalfwayAdj = {
+                        x: ((startPoint.x - pointO.x) / 2),
+                        y: ((startPoint.y - pointO.y) / 2)
+                    };
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px sans-serif';
+                    // ctx.fillText(Math.round(projLength), pointToPlace.x, pointToPlace.y);
+                    ctx.fillText(Math.round(projLength), startPoint.x - pointHalfwayAdj.x - (-dirOA.y * 25), startPoint.y - pointHalfwayAdj.y - (dirOA.x * 25));
+
+                    // ctx.fillText(Math.round(lenProjB), pointHalfwayOpp.x + (dirOA.x * 25), pointHalfwayOpp.y + (dirOA.y * 25));
+                    ctx.fillText(Math.round(lenProjB), startPoint.x + pointHalfwayOpp.x, startPoint.y + pointHalfwayOpp.y);
+                  }
+                }
+            }
         }
       }
 
@@ -239,6 +319,11 @@ const NewConstellationCanvas = () => {
   const handleAssistChange = () => {
     assistRef.current = !assistRef.current;
     setIsAssistOn(current => !current);
+  }
+  
+  const handleProjectionsChange = () => {
+    projectionsRef.current = !projectionsRef.current;
+    setIsProjectionsOn(current => !current);
   }
 
   return (
@@ -285,6 +370,14 @@ const NewConstellationCanvas = () => {
                 type="checkbox"
                 checked={isAssistOn}
                 onChange={handleAssistChange}
+            />
+        </label>
+        <label>
+            Show Projections (distance)
+            <input
+                type="checkbox"
+                checked={isProjectionsOn}
+                onChange={handleProjectionsChange}
             />
         </label>
     </div>
